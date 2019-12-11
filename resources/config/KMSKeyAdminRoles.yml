@@ -1,0 +1,2 @@
+- arn:aws:iam::#{AWS::AccountId}:role/ADMIN_USER
+- arn:aws:iam::#{AWS::AccountId}:role/POWER_USER

@@ -1,0 +1,118 @@
+service: psm
+
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-python-requirements
+  - serverless-iam-roles-per-function
+
+custom:
+  region: ${opt:region, 'us-west-2'}
+  stage: ${opt:stage, 'dev'}
+  kmsAlias: ${self:service}-${self:provider.stage}
+  metadataAsParam: ${opt:metadataAsParam, 'true'}
+
+  tags:
+    Application: psm
+    Owner: admin@foo.io
+    Environment: ${self:custom.stage}
+
+  pythonRequirements:
+    noDeploy:
+      - moto
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${self:custom.stage}
+  region: ${self:custom.region}
+
+  tags: ${self:custom.tags}
+  stackTags: ${self:custom.tags}
+
+  apiKeys:
+    - ${self:custom.stage}-${self:service}-key
+  
+  environment:
+    KMS_KEY_ALIAS: !Ref KMSKey
+    REGION: ${self:custom.region}
+    METADATA_AS_PARAM: ${self:custom.metadataAsParam}
+
+functions:
+
+  encrypt:
+    handler: src/encrypt.handler
+
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - kms:Encrypt
+        Resource:
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+
+    events:
+      - http:
+          method: post
+          path: encrypt
+      - http:
+          method: get
+          path: encrypt
+
+  update:
+    handler: src/update.handler
+
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - kms:Decrypt
+        Resource:
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+      - Effect: Allow
+        Action:
+          - ssm:PutParameter
+          - ssm:AddTagsToResource
+          - ssm:DescribeParameters
+          - ssm:GetParameter*
+        Resource:
+          - arn:aws:ssm:${self:custom.region}:#{AWS::AccountId}:parameter/*
+
+    events:
+      - http:
+          method: post
+          path: update
+          private: true
+          request:
+            parameters:
+              querystrings:
+                appId: true
+                stage: true
+
+  view:
+    handler: src/view.handler
+
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - kms:Encrypt
+        Resource:
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+      - Effect: Allow
+        Action:
+          - ssm:DescribeParameters
+          - ssm:GetParameter*
+        Resource:
+          - arn:aws:ssm:${self:custom.region}:#{AWS::AccountId}:parameter/*
+
+    events:
+      - http:
+          method: get
+          path: view
+          private: true
+          request:
+            parameters:
+              querystrings:
+                appId: true
+                stage: true
+
+resources:
+  - ${file(resources/ApiGatewayRestApi.yml)}
+  - ${file(resources/KMSKey.yml)}

@@ -1,0 +1,23 @@
+Resources:
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+        
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - execute-api:Invoke
+            Resource: '*'
+
+          - Effect: Deny
+            Principal: '*'
+            Action:
+              - execute-api:Invoke
+            Resource: '*'
+            Condition:
+              NotIpAddress:
+                aws:SourceIp:
+                  - 10.0.0.0/8

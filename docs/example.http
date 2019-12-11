@@ -1,0 +1,37 @@
+### Encrypt value
+
+POST https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/encrypt HTTP/1.1
+
+Hello World!
+
+### Get random encrypted value
+
+GET https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/encrypt HTTP/1.1
+
+### Error message, as POST method and no value supplied
+
+POST https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/encrypt HTTP/1.1
+
+### Update ssm and tag parameters
+
+POST https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/update?appId=psm-test&stage=dev HTTP/1.1
+x-api-key: abcdef0123456789ABCDEF0123456789abcdef01
+
+{
+    "metadata": {
+        "tags": {
+            "Application": "Application1",
+            "Environment": "dev",
+            "Owner": "admin@foo.io"
+        }
+    },
+    "foo": {
+        "bar": "buzz"
+    },
+    "baz": "cipher:AQICAHjumw2gwZTBa2YnOkSUAHOJqPkRvAtCsLcaUczMcoU9Bn+s2SAAAAajBoBgkqhQGCSqGSIb3DQEHAYjeV9+QF4GDRhPa2JWTAeBglghkgBZQMEAS4wEQQMLV23v4Q2MEO3OKPEd6dG6LTw4HAgEQgCeQNBit6tv+ZIdZ6kiG9w0BBwagWzBZAgEAMFiXRzKh31X6SpLamgaSxK43mcUMr8="
+}
+
+### View
+
+GET https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/view?appId=psm-test&stage=dev HTTP/1.1
+x-api-key: abcdef0123456789ABCDEF0123456789abcdef01

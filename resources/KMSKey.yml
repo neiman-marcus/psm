@@ -1,0 +1,73 @@
+Resources:
+
+  KMSKey:
+    Type: AWS::KMS::Key
+    DependsOn: IamRoleLambdaExecution
+    Properties:
+      Description: ${self:service} secret encryption key
+      EnableKeyRotation: true
+      Enabled: true
+      KeyPolicy: 
+        Version: '2012-10-17'
+        Id: EncryptionPolicy
+        Statement: 
+          - Sid: Allow encryption
+            Effect: Allow
+            Principal:
+              AWS:
+                - arn:aws:iam::#{AWS::AccountId}:role/${self:service}-${self:custom.stage}-encrypt-${self:custom.region}-lambdaRole
+                - arn:aws:iam::#{AWS::AccountId}:role/${self:service}-${self:custom.stage}-view-${self:custom.region}-lambdaRole
+            Action:
+              - kms:Encrypt
+            Resource: '*'
+          - Sid: Allow decryption
+            Effect: Allow
+            Principal:
+              AWS:
+                - arn:aws:iam::#{AWS::AccountId}:role/${self:service}-${self:custom.stage}-update-${self:custom.region}-lambdaRole
+            Action:
+              - kms:Decrypt
+            Resource: '*'
+          - Sid: Allow administration of the key by Admins
+            Effect: Allow
+            Principal:
+              AWS: ${file(resources/config/KMSKeyAdminRoles.yml)}
+            Action: 
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+      KeyUsage: ENCRYPT_DECRYPT
+
+  KMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/${self:custom.kmsAlias}
+      TargetKeyId: !Ref KMSKey
+
+Outputs:
+
+  KeyId:
+    Description: Id of the KMS created
+    Value: !Ref KMSKey
+    Export:
+      Name: '#{AWS::StackName}-KMSKey-Id'
+  KeyArn:
+    Description: ARN of the KMS created
+    Value: !GetAtt KMSKey.Arn
+    Export:
+      Name: '#{AWS::StackName}-KMSKey-Arn'
+  KMSKeyAlias:
+    Description: Alias of the KMS created
+    Value: !Ref KMSKeyAlias
+    Export:
+      Name: '#{AWS::StackName}-KMSKey-Alias'
