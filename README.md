@@ -132,7 +132,7 @@ Next, within deployment pipelines, the build server should look for configuratio
 
 The pipeline can make simple REST calls to put the parameters within those files, calling the `update` function. Use parameters in your pipeline to pass in the `appId` and `stage`. Neiman Marcus matches the `appId` to the repository name.
 
-### Sererless Framework
+### Severless Framework
 
 Serverless Framework is one of the tools that can leverage these parameters from SSM Parameter Store. It is common to push configuration to SSM Parameter Store, and then immediately call it when deploying. Local configuration files can be used with Serverless Framework, but would not leverage secret storage.
 
