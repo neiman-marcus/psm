@@ -74,7 +74,7 @@ This function requires use of the API key.
 
 You can include tags by including a dedicated `metadata.tags` section at the top level of the data input. The application will tag each parameter accordingly. It is advisable to keep tags at a minimum to avoid timeouts, and avoid too many tags which loses much of the value tags provide.
 
-Tags resides within metadata, to provide future extensibility within the metadata heirarchy.
+Tags reside within the metadata section, to provide future extensibility within the metadata heirarchy.
 
 To disable maintaining metadata in SSM Parameter Store, supply the `--metadataAsParam false` cli option when deploying.
 
@@ -130,7 +130,7 @@ Developers may start encrypting their secrets with the `encrypt` function and pu
 
 Next, within deployment pipelines, the build server should look for configuration files to push with each stage. For example, the repository can have a config directory, with json files for each stage. Example: `./config/{stage}.json`, or `./config/dev.json` and `/config/prod.json`.
 
-The pipeline can make simple REST calls to put the parameters within those files, calling the `update` function. Use parameters in your pipeline to pass in the `appId` and `stage`. Neiman Marcus matches the `appId` to the repository name.
+The pipeline can make REST calls to push the parameters within those files, calling the `update` function. Use parameters in your pipeline to pass in the `appId` and `stage`. Neiman Marcus matches the `appId` to the repository name.
 
 ### Severless Framework
 
@@ -160,7 +160,7 @@ provider:
 * The update and view functions require API keys.
 * The API key should be stored securely within your build server's credential store and not shared.
 * It is suggested that you modify the ApiGatewayRestApi to white list specific IP addresses if possible. Alternatively you can run the Api Gateway as a private endpoint.
-* Update the `KMSKeyAdminRoles.yml` configuration file with the appropriate IAM roles to manange the CMK.
+* Update the `KMSKey.yml` resource file with the appropriate IAM roles to manange the CMK.
 
 ## Known issues
 
