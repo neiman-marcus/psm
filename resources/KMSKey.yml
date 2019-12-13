@@ -31,7 +31,9 @@ Resources:
           - Sid: Allow administration of the key by Admins
             Effect: Allow
             Principal:
-              AWS: ${file(resources/config/KMSKeyAdminRoles.yml)}
+              AWS:
+                - arn:aws:iam::#{AWS::AccountId}:role/ADMIN_USER
+                - arn:aws:iam::#{AWS::AccountId}:role/POWER_USER
             Action: 
               - kms:Create*
               - kms:Describe*
