@@ -183,6 +183,6 @@ provider:
 
 ## Conduct / Contributing / License
 
-* Refer to our contribution guidelines to contribute to this project. See [CONTRIBUTING.md](https://github.com/neiman-marcus/terraform-aws-jenkins-ha-agents/tree/master/CONTRIBUTING.md).
-* All contributions must follow our code of conduct. See [CONDUCT.md](https://github.com/neiman-marcus/terraform-aws-jenkins-ha-agents/tree/master/CONDUCT.md).
-* This project is licensed under the Apache 2.0 license. See [LICENSE](https://github.com/neiman-marcus/terraform-aws-jenkins-ha-agents/tree/master/LICENSE).
+* Refer to our contribution guidelines to contribute to this project. See [CONTRIBUTING.md](https://github.com/neiman-marcus/psm/tree/master/CONTRIBUTING.md).
+* All contributions must follow our code of conduct. See [CONDUCT.md](https://github.com/neiman-marcus/psm/tree/master/CONDUCT.md).
+* This project is licensed under the Apache 2.0 license. See [LICENSE](https://github.com/neiman-marcus/psm/tree/master/LICENSE).
