@@ -6,6 +6,8 @@
 
 Security enabled simple REST service to manage application configuration in AWS SSM Parameter Store.
 
+Related blog post can be found on the [Neiman Marcus Medium page](https://medium.com/neiman-marcus-tech/psm-serverless-configuration-management-c681e93db37a?source=friends_link&sk=d6440d5f5176bff13758524e87f03388).
+
 ## Details
 
 Cloud applications often require runtime and deployment configuration which must be managed. Following infrastructure-as-code best practices, storing this configuration alongside the application is crucial. 
