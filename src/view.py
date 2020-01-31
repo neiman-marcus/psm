@@ -14,11 +14,11 @@ def handler(event, context):
     logger.info(f'Event:\n{event}')
 
     try:
-        app_id, stage = parse_event(event)
+        path = parse_event(event)
 
-        naked_params = get_params(app_id, stage)
+        naked_params = get_params(path)
 
-        params = parse_params(app_id, stage, naked_params)
+        params = parse_params(path, naked_params)
 
         response = {
             'statusCode': 200,
@@ -50,14 +50,20 @@ def parse_event(event):
     stage = event['queryStringParameters']['stage']
     logger.info(f'Stage: {stage}')
 
-    return app_id, stage
+    if 'x-path-override' in event['headers']:
+        path = event['headers']['x-path-override']
+    else:
+        path = f'/{app_id}/{stage}/'
+    logger.info(f'Path Override: {path}')
 
-def get_params(app_id, stage):
+    return path
+
+def get_params(path):
 
     ssm = get_client('ssm')
     
     response = ssm.get_parameters_by_path(
-        Path=f'/{app_id}/{stage}/',
+        Path=f'{path}',
         Recursive=True,
         WithDecryption=True,
     )
@@ -74,7 +80,7 @@ def get_client(service):
 
     return client
 
-def parse_params(app_id, stage, naked_params):
+def parse_params(path, naked_params):
 
     flat_params = {}
 
@@ -84,7 +90,7 @@ def parse_params(app_id, stage, naked_params):
             param['Value'] = encrypt(param['Value'])
 
         key = param['Name']
-        key = key.replace(f'/{app_id}/{stage}/', '')
+        key = key.replace(f'{path}', '')
         value = param['Value']
 
         try:

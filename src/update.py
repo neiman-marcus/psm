@@ -14,15 +14,15 @@ def handler(event, context):
     logger.info(f'Event:\n{event}')
 
     try:
-        app_id, stage, flat_data, tags = parse_event(event)
+        path, flat_data, tags = parse_event(event)
 
         ssm = get_client('ssm')
 
         for key,value in flat_data.items():
-            put_param(app_id, stage, key, value, ssm)
+            put_param(path, key, value, ssm)
 
             if len(tags) != 0:
-                tag_param(app_id, stage, key, tags, ssm)
+                tag_param(path, key, tags, ssm)
 
         response = {
             'statusCode': 200,
@@ -54,6 +54,12 @@ def parse_event(event):
     stage = event["queryStringParameters"]['stage']
     logger.info(f'Stage: {stage}')
 
+    if 'x-path-override' in event['headers']:
+        path = event['headers']['x-path-override']
+    else:
+        path = f'/{app_id}/{stage}/'
+    logger.info(f'Path Override: {path}')
+
     data = json.loads(event['body'])
     logger.info(f'Data:\n{data}')
 
@@ -82,9 +88,9 @@ def parse_event(event):
     
     logger.info(f'Updated Data:\n{flat_data}')
 
-    return app_id, stage, flat_data, tags
+    return path, flat_data, tags
 
-def put_param(app_id, stage, key, value, ssm):
+def put_param(path, key, value, ssm):
 
     logger.info(f'Key: {key}, Value: {value}')
 
@@ -96,11 +102,11 @@ def put_param(app_id, stage, key, value, ssm):
 
     logger.info(f'Param Type: {param_type}')
 
-    compare = compare_param(app_id, stage, key, value, param_type)
+    compare = compare_param(path, key, value, param_type)
 
     if compare is True:
         put = ssm.put_parameter(
-            Name=f'/{app_id}/{stage}/{key}',
+            Name=f'{path}{key}',
             Value=value,
             Type=param_type,
             Overwrite=True
@@ -138,13 +144,13 @@ def decrypt(value):
 
     return value
 
-def compare_param(app_id, stage, key, value, param_type):
+def compare_param(path, key, value, param_type):
 
     ssm = get_client('ssm')
     
     try:
         get = ssm.get_parameter(
-            Name=f'/{app_id}/{stage}/{key}',
+            Name=f'{path}{key}',
             WithDecryption=True
         )
 
@@ -160,7 +166,7 @@ def compare_param(app_id, stage, key, value, param_type):
 
     return compare
 
-def tag_param(app_id, stage, key, tags, ssm):
+def tag_param(path, key, tags, ssm):
 
     logger.info('Adding Tags')
 
@@ -171,7 +177,7 @@ def tag_param(app_id, stage, key, tags, ssm):
 
         tag = ssm.add_tags_to_resource(
             ResourceType='Parameter',
-            ResourceId=f'/{app_id}/{stage}/{key}',
+            ResourceId=f'{path}{key}',
             Tags=[
                 {
                     'Key': tag_key,

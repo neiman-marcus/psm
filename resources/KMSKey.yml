@@ -53,7 +53,7 @@ Resources:
   KMSKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/${self:custom.kmsAlias}
+      AliasName: ${self:custom.kmsAlias}
       TargetKeyId: !Ref KMSKey
 
 Outputs:

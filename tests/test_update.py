@@ -16,6 +16,9 @@ class test_encrypt(unittest.TestCase):
         self.app_id = 'hello_world'
         self.stage = 'dev'
 
+        self.path = f'/{self.app_id}/{self.stage}/'
+        self.path_override = f'/org/{self.stage}/{self.app_id}/'
+
         self.region = 'us-west-2'
         self.alias = 'alias/kms-test'
         self.secret = 'Hello World!'
@@ -32,15 +35,26 @@ class test_encrypt(unittest.TestCase):
 
         self.data = {**self.metadata, **self.params}
         self.body = json.dumps(self.data)
-        self.event = {'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
+        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
+        self.event_path_override = {'headers': {'x-path-override': self.path_override},'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
 
     def test_parse_event(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
-        app_id, stage, flat_data, tags = update.parse_event(self.event)
+        path, app_id, stage, flat_data, tags = update.parse_event(self.event)
         self.assertEqual(app_id, self.app_id)
         self.assertEqual(stage, self.stage)
         self.assertEqual(flat_data, self.flat_data)
         self.assertEqual(tags, self.tags)
+        self.assertEqual(path, None)
+
+    def test_parse_event_path_override(self):
+        os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
+        path, app_id, stage, flat_data, tags = update.parse_event(self.event_path_override)
+        self.assertEqual(app_id, self.app_id)
+        self.assertEqual(stage, self.stage)
+        self.assertEqual(flat_data, self.flat_data)
+        self.assertEqual(tags, self.tags)
+        self.assertEqual(path, self.path_override)
 
     def test_get_client(self):
         os.environ['REGION'] = self.region
@@ -73,10 +87,10 @@ class test_encrypt(unittest.TestCase):
         os.environ['REGION'] = self.region
         self.__moto_ssm_setup()
 
-        compare_true = update.compare_param(self.app_id, self.stage, 'foo', 'bar', 'String')
+        compare_true = update.compare_param(self.path, 'foo', 'bar', 'String')
         self.assertFalse(compare_true)
 
-        compare_false = update.compare_param(self.app_id, self.stage, 'foo', 'bazz', 'String')
+        compare_false = update.compare_param(self.path, 'foo', 'bazz', 'String')
         self.assertTrue(compare_false)
 
     @mock_kms
@@ -98,10 +112,10 @@ class test_encrypt(unittest.TestCase):
 
         ssm = update.get_client('ssm')
 
-        response_false = update.put_param(self.app_id, self.stage, 'foo', 'bar', ssm)
+        response_false = update.put_param(self.path, 'foo', 'bar', ssm)
         self.assertFalse(response_false)
 
-        response_true = update.put_param(self.app_id, self.stage, 'foo', 'bazz', ssm)
+        response_true = update.put_param(self.path, 'foo', 'bazz', ssm)
         self.assertTrue(response_true)
 
     @mock_ssm
@@ -110,13 +124,9 @@ class test_encrypt(unittest.TestCase):
         self.__moto_ssm_setup()
 
         ssm = update.get_client('ssm')
-        response = update.tag_param(self.app_id, self.stage, 'foo', self.tags, ssm)
+        response = update.tag_param(self.path, 'foo', self.tags, ssm)
 
         self.assertTrue(response['ResponseMetadata']['HTTPStatusCode'], '200')
-
-
-
-
 
 if __name__ == "__main__":
     unittest.main()

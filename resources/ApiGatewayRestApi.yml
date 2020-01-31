@@ -1,4 +1,5 @@
 Resources:
+
   ApiGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
