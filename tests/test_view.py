@@ -37,18 +37,12 @@ class test_view(unittest.TestCase):
     
     def test_parse_event(self):
 
-        path, app_id, stage = view.parse_event(self.event)
-
-        self.assertEqual(app_id, self.app_id)
-        self.assertEqual(stage, self.stage)
-        self.assertEqual(path, None)
+        path = view.parse_event(self.event)
+        self.assertEqual(path, self.path)
 
     def test_parse_event_path_override(self):
 
-        path, app_id, stage = view.parse_event(self.event_path_override)
-
-        self.assertEqual(app_id, self.app_id)
-        self.assertEqual(stage, self.stage)
+        path = view.parse_event(self.event_path_override)
         self.assertEqual(path, self.path_override)
 
     def test_get_client(self):

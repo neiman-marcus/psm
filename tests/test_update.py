@@ -40,21 +40,17 @@ class test_encrypt(unittest.TestCase):
 
     def test_parse_event(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
-        path, app_id, stage, flat_data, tags = update.parse_event(self.event)
-        self.assertEqual(app_id, self.app_id)
-        self.assertEqual(stage, self.stage)
+        path, flat_data, tags = update.parse_event(self.event)
+        self.assertEqual(path, self.path)
         self.assertEqual(flat_data, self.flat_data)
         self.assertEqual(tags, self.tags)
-        self.assertEqual(path, None)
 
     def test_parse_event_path_override(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
-        path, app_id, stage, flat_data, tags = update.parse_event(self.event_path_override)
-        self.assertEqual(app_id, self.app_id)
-        self.assertEqual(stage, self.stage)
+        path, flat_data, tags = update.parse_event(self.event_path_override)
+        self.assertEqual(path, self.path_override)
         self.assertEqual(flat_data, self.flat_data)
         self.assertEqual(tags, self.tags)
-        self.assertEqual(path, self.path_override)
 
     def test_get_client(self):
         os.environ['REGION'] = self.region
