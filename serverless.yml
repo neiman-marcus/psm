@@ -25,6 +25,7 @@ provider:
   runtime: python3.7
   stage: ${self:custom.stage}
   region: ${self:custom.region}
+  versionFunctions: false
 
   tags: ${self:custom.tags}
   stackTags: ${self:custom.tags}
