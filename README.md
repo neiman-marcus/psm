@@ -20,6 +20,10 @@ Deployed with serverless framework, this application can be easily modified for 
 
 Psm assumes that application configuration is stored in a specific heirarchy in AWS SSM Parameter Store. By default psm deploys and handles configuration under `/{application}/{stage}/...` with each application or service having multiple stages for different environments. It is common to have a `dev`, `staging` and `prod` stage of an application.
 
+### Path Override
+
+You can override the default path, by passing a hardcoded string in the `x-path-override` header.
+
 ## Psm functions
 
 Psm uses the following three lambda functions:
@@ -107,6 +111,15 @@ curl -X POST 'https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/update
   -d 'config/dev.json'
 ```
 
+with `x-path-override` header:
+
+```SHELL
+curl -X POST 'https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/update?appId=psm-test&stage=dev' \
+  -H 'x-api-key: abcdef0123456789ABCDEF0123456789abcdef01' \
+  -H 'x-path-override: /org/service/dev5/' \
+  -d 'config/dev.json'
+```
+
 ### View
 
 The `view` function will retrieve the configuration from parameter store, for review. `SecureString` parameters are encrypted with the CMK during the process. Similar to the `update` function, the `view` function leverages query string parameters, which are `appId` and `stage`.
@@ -155,6 +168,12 @@ provider:
 | --- | --- | --- |
 | appId | The name of the application or service to prefix parameters with. | yes |
 | stage | The name of the stage to prefix parameters with. | yes |
+
+### Custom Headers
+
+| header | Description | Required |
+| --- | --- | --- |
+| x-path-override | The custom path to override the PSM default. | no |
 
 ## Security
 

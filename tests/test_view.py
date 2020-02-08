@@ -14,29 +14,36 @@ class test_view(unittest.TestCase):
         self.app_id = 'hello-world'
         self.stage = 'dev'
 
-        self.param = f'/{self.app_id}/{self.stage}/'
+        self.path = f'/{self.app_id}/{self.stage}/'
+        self.path_override = f'/org/{self.stage}/{self.app_id}/'
+
         self.region = 'us-west-2'
 
         self.string_key_1 = 'foo'
         self.string_key_2 = 'bar'
         self.string_key = self.string_key_1 + '.' + self.string_key_2
         self.string_value = 'bazz'
-        self.string_param = self.param + self.string_key
+        self.string_param = self.path + self.string_key
 
         self.secure_string_key = 'buzz'
         self.secure_string_value = 'qux'
-        self.secure_string_param = self.param + self.secure_string_key
+        self.secure_string_param = self.path + self.secure_string_key
 
         self.alias = 'alias/kms-test'
         self.secret = 'Hello World!'
+        
+        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {'appId': self.app_id,'stage': self.stage}}
+        self.event_path_override = {'headers': {'x-path-override': self.path_override},'queryStringParameters': {'appId': self.app_id,'stage': self.stage}}
     
     def test_parse_event(self):
 
-        event = {'queryStringParameters': {'appId': self.app_id,'stage': self.stage}}
-        app_id, stage = view.parse_event(event)
+        path = view.parse_event(self.event)
+        self.assertEqual(path, self.path)
 
-        self.assertEqual(app_id, self.app_id)
-        self.assertEqual(stage, self.stage)
+    def test_parse_event_path_override(self):
+
+        path = view.parse_event(self.event_path_override)
+        self.assertEqual(path, self.path_override)
 
     def test_get_client(self):
 
@@ -76,7 +83,7 @@ class test_view(unittest.TestCase):
     def test_get_params(self):
 
         self.__moto_ssm_setup()
-        naked_params = view.get_params(self.app_id, self.stage)
+        naked_params = view.get_params(self.path)
 
         self.assertEqual(naked_params[0]['Name'], self.string_param)
         self.assertEqual(naked_params[0]['Value'], self.string_value)
@@ -91,7 +98,7 @@ class test_view(unittest.TestCase):
         naked_params = [{'Name': self.string_param, 'Value': self.string_value, 'Type': 'String'}]
         unflat_params = {self.string_key_1: {self.string_key_2: self.string_value}}
 
-        params = view.parse_params(self.app_id, self.stage, naked_params)
+        params = view.parse_params(self.path, naked_params)
         self.assertEqual(params, json.dumps(unflat_params))
 
     @mock_kms
@@ -101,7 +108,7 @@ class test_view(unittest.TestCase):
         self.__moto_kms_setup()
 
         naked_params = [{'Name': self.secure_string_param, 'Value': self.secure_string_value, 'Type': 'SecureString'}]
-        params = view.parse_params(self.app_id, self.stage, naked_params)
+        params = view.parse_params(self.path, naked_params)
 
         self.assertIsInstance(params, str)
         
@@ -127,12 +134,11 @@ class test_view(unittest.TestCase):
         os.environ['REGION'] = self.region
         os.environ['KMS_KEY_ALIAS'] = self.alias
 
-        event = {'queryStringParameters': {'appId': self.app_id,'stage': self.stage}}
         context = None
 
         self.__moto_ssm_setup()
         self.__moto_kms_setup()
-        response = view.handler(event, context)
+        response = view.handler(self.event, context)
 
         status_code = response['statusCode']
         self.assertEqual(status_code, 200)

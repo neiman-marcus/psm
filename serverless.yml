@@ -8,7 +8,7 @@ plugins:
 custom:
   region: ${opt:region, 'us-west-2'}
   stage: ${opt:stage, 'dev'}
-  kmsAlias: ${self:service}-${self:provider.stage}
+  kmsAlias: alias/${self:service}-${self:provider.stage}
   metadataAsParam: ${opt:metadataAsParam, 'true'}
 
   tags:
@@ -25,6 +25,7 @@ provider:
   runtime: python3.7
   stage: ${self:custom.stage}
   region: ${self:custom.region}
+  versionFunctions: false
 
   tags: ${self:custom.tags}
   stackTags: ${self:custom.tags}
@@ -33,7 +34,7 @@ provider:
     - ${self:custom.stage}-${self:service}-key
   
   environment:
-    KMS_KEY_ALIAS: !Ref KMSKey
+    KMS_KEY_ALIAS: ${self:custom.kmsAlias}
     REGION: ${self:custom.region}
     METADATA_AS_PARAM: ${self:custom.metadataAsParam}
 
@@ -47,7 +48,7 @@ functions:
         Action:
           - kms:Encrypt
         Resource:
-          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:${self:custom.kmsAlias}
 
     events:
       - http:
@@ -65,7 +66,7 @@ functions:
         Action:
           - kms:Decrypt
         Resource:
-          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:${self:custom.kmsAlias}
       - Effect: Allow
         Action:
           - ssm:PutParameter
@@ -85,6 +86,8 @@ functions:
               querystrings:
                 appId: true
                 stage: true
+              headers:
+                x-path-override: false
 
   view:
     handler: src/view.handler
@@ -94,7 +97,7 @@ functions:
         Action:
           - kms:Encrypt
         Resource:
-          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:alias/${self:custom.kmsAlias}
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:${self:custom.kmsAlias}
       - Effect: Allow
         Action:
           - ssm:DescribeParameters
@@ -112,6 +115,8 @@ functions:
               querystrings:
                 appId: true
                 stage: true
+              headers:
+                x-path-override: false
 
 resources:
   - ${file(resources/ApiGatewayRestApi.yml)}
