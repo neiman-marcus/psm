@@ -2,7 +2,7 @@
 
 # psm
 
-![version](https://img.shields.io/badge/version-v1.0.0-green.svg?style=flat) ![license](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat)
+![version](https://img.shields.io/badge/version-v1.1.0-green.svg?style=flat) ![license](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat)
 
 Security enabled simple REST service to manage application configuration in AWS SSM Parameter Store.
 
