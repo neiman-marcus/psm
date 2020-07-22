@@ -26,13 +26,14 @@ provider:
   stage: ${self:custom.stage}
   region: ${self:custom.region}
   versionFunctions: false
+  timeout: 30
 
   tags: ${self:custom.tags}
   stackTags: ${self:custom.tags}
 
   apiKeys:
     - ${self:custom.stage}-${self:service}-key
-  
+
   environment:
     KMS_KEY_ALIAS: ${self:custom.kmsAlias}
     REGION: ${self:custom.region}
