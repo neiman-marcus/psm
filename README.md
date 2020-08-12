@@ -108,7 +108,7 @@ x-api-key: abcdef0123456789ABCDEF0123456789abcdef01
 ```SHELL
 curl -X POST 'https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/update?appId=psm-test&stage=dev' \
   -H 'x-api-key: abcdef0123456789ABCDEF0123456789abcdef01' \
-  -d 'config/dev.json'
+  -d '@config/dev.json'
 ```
 
 with `x-path-override` header:
@@ -117,7 +117,7 @@ with `x-path-override` header:
 curl -X POST 'https://abcdef0123.execute-api.us-west-2.amazonaws.com/prod/update?appId=psm-test&stage=dev' \
   -H 'x-api-key: abcdef0123456789ABCDEF0123456789abcdef01' \
   -H 'x-path-override: /org/service/dev5/' \
-  -d 'config/dev.json'
+  -d '@config/dev.json'
 ```
 
 ### View
