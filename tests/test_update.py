@@ -28,6 +28,8 @@ class test_encrypt(unittest.TestCase):
         self.metadata = {'metadata': {'tags': self.tags}}
 
         self.params = {'foo': 'bar', 'bazz': {'buzz': 'qux'}}
+        self.parms_block_expected = {'foo': 'bar', 'bazz': {'buzz': 'qux'}}
+
         self.merge_data = {**self.metadata, **self.params}
         self.flat_data = flatten(self.merge_data, '.')
         self.existing_param = {'foo': 'bar'}
@@ -35,21 +37,33 @@ class test_encrypt(unittest.TestCase):
 
         self.data = {**self.metadata, **self.params}
         self.body = json.dumps(self.data)
-        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
-        self.event_path_override = {'headers': {'x-path-override': self.path_override},'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
+        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {
+            'appId': self.app_id, 'stage': self.stage}, 'body': self.body}
+        self.event_path_override = {'headers': {'x-path-override': self.path_override},
+                                    'queryStringParameters': {'appId': self.app_id, 'stage': self.stage}, 'body': self.body}
+        self.event_block_parser = {'headers': {'x-kv-block-parser': 'true'}, 'queryStringParameters': {
+            'appId': self.app_id, 'stage': self.stage}, 'body': self.body}
 
     def test_parse_event(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
-        path, flat_data, tags = update.parse_event(self.event)
-        self.assertEqual(path, self.path)
+        flat_data = update.parse_event(self.data)
         self.assertEqual(flat_data, self.flat_data)
-        self.assertEqual(tags, self.tags)
 
     def test_parse_event_path_override(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
-        path, flat_data, tags = update.parse_event(self.event_path_override)
-        self.assertEqual(path, self.path_override)
+        flat_data = update.parse_event(self.data)
         self.assertEqual(flat_data, self.flat_data)
+
+    def test_parse_event_block_parser(self):
+        parms_block_actual = update.parse_event_kv_block(self.params)
+        self.assertEqual(parms_block_actual, self.parms_block_expected)
+
+    def test_get_path(self):
+        path = update.get_path(self.event)
+        self.assertEqual(path, self.path)
+
+    def test_get_tags(self):
+        tags = update.get_tags(self.data)
         self.assertEqual(tags, self.tags)
 
     def test_get_client(self):
@@ -60,25 +74,26 @@ class test_encrypt(unittest.TestCase):
         kms = str(update.get_client('kms'))
         self.assertTrue('<botocore.client.KMS object at' in kms)
 
-    @mock_ssm
+    @ mock_ssm
     def __moto_ssm_setup(self):
         ssm = update.get_client('ssm')
 
-        for key,value in self.existing_param.items():
+        for key, value in self.existing_param.items():
             ssm.put_parameter(
                 Name=f'/{self.app_id}/{self.stage}/{key}',
                 Value=value,
                 Type=self.existing_param_type,
                 Overwrite=True
             )
-    
-    @mock_kms
+
+    @ mock_kms
     def __moto_kms_setup(self):
         kms = update.get_client('kms')
         key = kms.create_key()
-        kms.create_alias(AliasName=self.alias, TargetKeyId=key['KeyMetadata']['KeyId'])
-    
-    @mock_ssm
+        kms.create_alias(AliasName=self.alias,
+                         TargetKeyId=key['KeyMetadata']['KeyId'])
+
+    @ mock_ssm
     def test_compare_param(self):
         os.environ['REGION'] = self.region
         self.__moto_ssm_setup()
@@ -86,10 +101,11 @@ class test_encrypt(unittest.TestCase):
         compare_true = update.compare_param(self.path, 'foo', 'bar', 'String')
         self.assertFalse(compare_true)
 
-        compare_false = update.compare_param(self.path, 'foo', 'bazz', 'String')
+        compare_false = update.compare_param(
+            self.path, 'foo', 'bazz', 'String')
         self.assertTrue(compare_false)
 
-    @mock_kms
+    @ mock_kms
     def test_decrypt(self):
         os.environ['REGION'] = self.region
         os.environ['KMS_KEY_ALIAS'] = self.alias
@@ -101,28 +117,26 @@ class test_encrypt(unittest.TestCase):
 
         self.assertEqual(decrypt, self.secret)
 
-    @mock_ssm
+    @ mock_ssm
     def test_put_param(self):
         os.environ['REGION'] = self.region
         self.__moto_ssm_setup()
 
-        ssm = update.get_client('ssm')
-
-        response_false = update.put_param(self.path, 'foo', 'bar', ssm)
+        response_false = update.put_param(self.path, 'foo', 'bar')
         self.assertFalse(response_false)
 
-        response_true = update.put_param(self.path, 'foo', 'bazz', ssm)
+        response_true = update.put_param(self.path, 'foo', 'bazz')
         self.assertTrue(response_true)
 
-    @mock_ssm
+    @ mock_ssm
     def test_tag_param(self):
         os.environ['REGION'] = self.region
         self.__moto_ssm_setup()
 
-        ssm = update.get_client('ssm')
-        response = update.tag_param(self.path, 'foo', self.tags, ssm)
+        response = update.tag_param(self.path, 'foo', self.tags)
 
         self.assertTrue(response['ResponseMetadata']['HTTPStatusCode'], '200')
+
 
 if __name__ == "__main__":
     unittest.main()

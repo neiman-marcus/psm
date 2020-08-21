@@ -4,6 +4,7 @@ import logging
 import json
 from flatten_json import unflatten
 import os
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -54,7 +55,8 @@ def parse_event(event):
         path = event['headers']['x-path-override']
     else:
         path = f'/{app_id}/{stage}/'
-    logger.info(f'Path Override: {path}')
+
+    logger.info(f'Path : {path}')
 
     return path
 
@@ -62,11 +64,14 @@ def get_params(path):
 
     ssm = get_client('ssm')
     
-    response = ssm.get_parameters_by_path(
-        Path=f'{path}',
-        Recursive=True,
-        WithDecryption=True,
-    )
+    try:
+        response = ssm.get_parameters_by_path(
+            Path=f'{path}',
+            Recursive=True,
+            WithDecryption=True,
+        )
+    except ClientError as e:
+        logger.info(f'Unexpected ClienbtError: {e}')
 
     logger.info('Got params!')
 
@@ -116,7 +121,12 @@ def encrypt(secret):
     logger.info(f'KMS Key: {key}')
 
     kms = get_client('kms')
-    kms_response = kms.encrypt(KeyId=key, Plaintext=secret.encode())
+
+    try:
+        kms_response = kms.encrypt(KeyId=key, Plaintext=secret.encode())
+    except ClientError as e:
+        logger.error(f'Unexpected ClienbtError: {e}')
+
     logger.info(f'KMS Response:\n{kms_response}')
 
     blob = base64.b64encode(kms_response['CiphertextBlob'])
