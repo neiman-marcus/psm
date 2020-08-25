@@ -30,7 +30,7 @@ You can override the default parser by passing a `x-kv-block-parser: true` in th
 
 #### eg. input json:
 
-```
+```JSON
 {
   "keyOne": {
     "DOB": "02/19/1983",
