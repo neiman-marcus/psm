@@ -30,15 +30,32 @@ You can override the default parser by passing a `x-kv-block-parser: true` in th
 
 #### eg. input json:
 
-`{ "keyOne": { "bgContactUsPhone": "+1 (214) 600 0090", "PhoneYYY": "+1 (214) 999999" }, "keyTwo": { "PRE_ORDER_SORT_OPTION": "false" }, "keyThree": { "API_ENDPOINT_CRP": { "uri": "/dt/api/crp-svc/US", "toggles": ["PRE_ORDER_SORT_OPTION", "BG_PHASE_2_RELEASE_2"] } } }`
+```
+{
+  "keyOne": {
+    "DOB": "02/19/1983",
+    "Phone": "+1 (214) 999999"
+  },
+  "keyTwo": {
+    "VehicleID": "1XBYUT"
+  },
+  "keyThree": {
+    "API_ENDPOINT": {
+      "uri": "/dbcy.com/US",
+      "toggles": ["ORDER_SORT_OPTION_1", "ORDER_SORT_OPTION_2"]
+    }
+  }
+}
+
+```
 
 #### output ssm key value:
 
-| key        | value                                                                                                               |
-| ---------- | ------------------------------------------------------------------------------------------------------------------- |
-| `keyOne`   | `{'bgContactUsPhone': '+1 (214) 600 0090', 'PhoneXXX': '+1 (214) 999999'}`                                          |
-| `keyTwo`   | `{'PRE_ORDER_SORT_OPTION': 'false'}`                                                                                |
-| `keyThree` | `{'API_ENDPOINT_CRP': {'uri': '/dt/api/crp-svc/US', 'toggles': ['PRE_ORDER_SORT_OPTION', 'BG_PHASE_2_RELEASE_2']}}` |
+| key        | value                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------- |
+| `keyOne`   | `{"DOB": "02/19/1983","Phone": "+1 (214) 999999"`                                                    |
+| `keyTwo`   | `{"VehicleID": "1XBYUT"}`                                                                            |
+| `keyThree` | `{"API_ENDPOINT": {"uri": "/dbcy.com/US","toggles": ["ORDER_SORT_OPTION_1","ORDER_SORT_OPTION_2"]}}` |
 
 ## Psm functions
 

@@ -6,6 +6,11 @@ import json
 from flatten_json import flatten
 import os
 
+
+# logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] [function: %(funcName)s] %(message)s',
+#                     datefmt='%Y-%m-%d:%H:%M:%S',
+#                     level=logging.DEBUG)
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -151,12 +156,12 @@ def put_param(path, key, value):
         try:
             put = ssm.put_parameter(
                 Name=f'{path}{key}',
-                Value=value,
+                Value=f'{value}',
                 Type=param_type,
                 Overwrite=True
             )
         except ClientError as e:
-            logger.error(f'Unexpected ClienbtError: {e}')
+            logger.error(f'Unexpected ClientError: {e}')
 
         logger.info(f'Put Response:\n{put}')
         response = True
@@ -187,7 +192,7 @@ def decrypt(value):
     try:
         kms_response = kms.decrypt(CiphertextBlob=bytes_value)
     except ClientError as e:
-        logger.error(f'Unexpected ClienbtError: {e}')
+        logger.error(f'Unexpected ClientError: {e}')
 
     logger.info('** Secret decrypted!')
 
@@ -214,8 +219,14 @@ def compare_param(path, key, value, param_type):
             isDifferent = True
         else:
             isDifferent = False
+
+    except ssm.exceptions.ParameterNotFound:
+        logger.info(f'{path}{key} not found in ssm')
+        isDifferent = True
+        pass  # Dont stop the execution
+
     except ClientError as e:
-        logger.error(f'Unexpected ClienbtError: {e}')
+        logger.error(f'Unexpected ClientError: {e}')
         isDifferent = True
 
     return isDifferent
@@ -243,7 +254,7 @@ def tag_param(path, key, tags):
                 ]
             )
         except ClientError as e:
-            logger.error(f'Unexpected ClienbtError: {e}')
+            logger.error(f'Unexpected ClientError: {e}')
 
         logger.info(f'Tag Response:\n{tag}')
 
