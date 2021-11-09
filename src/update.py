@@ -1,15 +1,16 @@
+import os
 import base64
-import boto3
 import logging
 import json
+import boto3
 from flatten_json import flatten
-import os
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def handler(event, context):
-    
+
     logger.info('Incoming event!')
     logger.info(f'Event:\n{event}')
 
@@ -18,7 +19,7 @@ def handler(event, context):
 
         ssm = get_client('ssm')
 
-        for key,value in flat_data.items():
+        for key, value in flat_data.items():
             put_param(path, key, value, ssm)
 
             if len(tags) != 0:
@@ -46,6 +47,7 @@ def handler(event, context):
 
         return response
 
+
 def parse_event(event):
 
     app_id = event["queryStringParameters"]['appId']
@@ -67,34 +69,33 @@ def parse_event(event):
     logger.info(f'Flat data:\n{flat_data}')
 
     tags = {}
-    
-    for key,value in flat_data.items():
+
+    for key, value in flat_data.items():
         if key.startswith('metadata.tags.'):
             key = key[14:]
             new_tag = {key: value}
             tags = {**tags, **new_tag}
-    
+
     logger.info(f'Tags found: {tags}')
-    
+
     if not os.environ['METADATA_AS_PARAM']:
         for key in list(flat_data.keys()):
             if key.startswith('metadata.'):
                 del flat_data[key]
-    
-    for key,value in flat_data.items():
-        if isinstance(value,int):
+
+    for key, value in flat_data.items():
+        if isinstance(value, int):
             flat_data[key] = str(value)
 
-    
     logger.info(f'Updated Data:\n{flat_data}')
-
     return path, flat_data, tags
+
 
 def put_param(path, key, value, ssm):
 
     logger.info(f'Key: {key}, Value: {value}')
 
-    if isinstance(value,str) and value.startswith('cipher:') is True:
+    if isinstance(value, str) and value.startswith('cipher:') is True:
         value = decrypt(value)
         param_type = 'SecureString'
     else:
@@ -111,9 +112,9 @@ def put_param(path, key, value, ssm):
             Type=param_type,
             Overwrite=True
         )
-    
+
         logger.info(f'Put Response:\n{put}')
-    
+
         response = True
     else:
         logger.info('Parameter is current.')
@@ -121,11 +122,13 @@ def put_param(path, key, value, ssm):
 
     return response
 
+
 def get_client(service):
     region = os.environ['REGION']
     service = boto3.client(service, region_name=region)
 
     return service
+
 
 def decrypt(value):
 
@@ -144,10 +147,11 @@ def decrypt(value):
 
     return value
 
+
 def compare_param(path, key, value, param_type):
 
     ssm = get_client('ssm')
-    
+
     try:
         get = ssm.get_parameter(
             Name=f'{path}{key}',
@@ -166,14 +170,15 @@ def compare_param(path, key, value, param_type):
 
     return compare
 
+
 def tag_param(path, key, tags, ssm):
 
     logger.info('Adding Tags')
 
     psm_param = {'ManagedBy': 'psm'}
     tags = {**tags, **psm_param}
-    
-    for tag_key,tag_value in tags.items():
+
+    for tag_key, tag_value in tags.items():
 
         tag = ssm.add_tags_to_resource(
             ResourceType='Parameter',
@@ -185,7 +190,7 @@ def tag_param(path, key, tags, ssm):
                 },
             ]
         )
-    
+
         logger.info(f'Tag Response:\n{tag}')
 
     return tag
