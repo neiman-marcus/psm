@@ -3,6 +3,7 @@ import base64
 import logging
 import json
 import boto3
+from botocore.exceptions import ClientError
 from flatten_json import flatten
 
 logger = logging.getLogger()
@@ -37,13 +38,22 @@ def handler(event, context):
 
     except:
 
-        response = {
-            'statusCode': 500,
-            'body': 'Err: Internal server error.',
-            'headers': {
-                'Content-Type': 'text/plain'
+        if 'key' in locals():
+            response = {
+                'statusCode': 500,
+                'body': 'Err: Internal server error while work with: ' + key,
+                'headers': {
+                    'Content-Type': 'text/plain'
+                }
             }
-        }
+        else:
+            response = {
+                'statusCode': 500,
+                'body': 'Err: Internal server error.',
+                'headers': {
+                    'Content-Type': 'text/plain'
+                }
+            }
 
         return response
 
@@ -138,12 +148,17 @@ def decrypt(value):
     trim_value = value[7:]
     bytes_value = base64.b64decode(trim_value)
 
-    kms = get_client('kms')
-    kms_response = kms.decrypt(CiphertextBlob=bytes_value)
-    logger.info('Secret decrypted!')
-
-    bytes_decrypted_value = kms_response['Plaintext']
-    value = bytes_decrypted_value.decode('utf-8')
+    try:
+        kms = get_client('kms')
+        kms_response = kms.decrypt(CiphertextBlob=bytes_value)
+    except ClientError as e:
+        logger.critical('Error while decoding by KMS:')
+        value = e
+        raise
+    else:
+        logger.info('Secret decrypted!')
+        bytes_decrypted_value = kms_response['Plaintext']
+        value = bytes_decrypted_value.decode('utf-8')
 
     return value
 
