@@ -27,7 +27,7 @@ class test_encrypt(unittest.TestCase):
             valid_uuid = True
         except ValueError:
             valid_uuid = False
-            
+
         self.assertTrue(valid_uuid)
 
     def test_post_empty_body(self):
@@ -45,7 +45,7 @@ class test_encrypt(unittest.TestCase):
         os.environ['REGION'] = self.region
         kms = str(encrypt.get_client())
         self.assertTrue('<botocore.client.KMS object at' in kms)
-        
+
     @mock_kms
     def test_encrypt_value(self):
         os.environ['REGION'] = self.region
@@ -54,7 +54,7 @@ class test_encrypt(unittest.TestCase):
 
         cipher = encrypt.encrypt(self.secret)
         self.assertTrue(cipher.startswith('cipher:'))
-    
+
     @mock_kms
     def test_handler(self):
         os.environ['REGION'] = self.region
@@ -114,6 +114,7 @@ class test_encrypt(unittest.TestCase):
 
         content_type = response['headers']['Content-Type']
         self.assertEqual(content_type, 'text/plain')
+
 
 if __name__ == "__main__":
     unittest.main()
