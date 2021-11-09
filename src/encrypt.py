@@ -1,16 +1,17 @@
 import base64
-import boto3
 import logging
 import os
 import uuid
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def handler(event, context):
-    
+
     logger.info('Incoming event!')
-    
+
     try:
 
         secret = get_secret(event)
@@ -55,6 +56,7 @@ def handler(event, context):
 
         return response
 
+
 def get_secret(event):
 
     method = event['httpMethod']
@@ -69,6 +71,7 @@ def get_secret(event):
         logger.info('Secret generated!')
 
     return secret
+
 
 def encrypt(secret):
 
@@ -86,8 +89,9 @@ def encrypt(secret):
 
     return cipher
 
+
 def get_client():
-    
+
     region = os.environ['REGION']
     kms = boto3.client('kms', region_name=region)
 

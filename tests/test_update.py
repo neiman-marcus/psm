@@ -1,6 +1,5 @@
 import unittest
 import os
-import uuid
 import json
 from flatten_json import flatten
 
@@ -35,8 +34,8 @@ class test_encrypt(unittest.TestCase):
 
         self.data = {**self.metadata, **self.params}
         self.body = json.dumps(self.data)
-        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
-        self.event_path_override = {'headers': {'x-path-override': self.path_override},'queryStringParameters': {'appId': self.app_id,'stage': self.stage},'body': self.body}
+        self.event = {'headers': {'x-test-header': 'test'}, 'queryStringParameters': {'appId': self.app_id, 'stage': self.stage}, 'body': self.body}
+        self.event_path_override = {'headers': {'x-path-override': self.path_override}, 'queryStringParameters': {'appId': self.app_id, 'stage': self.stage}, 'body': self.body}
 
     def test_parse_event(self):
         os.environ['METADATA_AS_PARAM'] = self.metadata_as_param
@@ -64,20 +63,20 @@ class test_encrypt(unittest.TestCase):
     def __moto_ssm_setup(self):
         ssm = update.get_client('ssm')
 
-        for key,value in self.existing_param.items():
+        for key, value in self.existing_param.items():
             ssm.put_parameter(
                 Name=f'/{self.app_id}/{self.stage}/{key}',
                 Value=value,
                 Type=self.existing_param_type,
                 Overwrite=True
             )
-    
+
     @mock_kms
     def __moto_kms_setup(self):
         kms = update.get_client('kms')
         key = kms.create_key()
         kms.create_alias(AliasName=self.alias, TargetKeyId=key['KeyMetadata']['KeyId'])
-    
+
     @mock_ssm
     def test_compare_param(self):
         os.environ['REGION'] = self.region
@@ -123,6 +122,7 @@ class test_encrypt(unittest.TestCase):
         response = update.tag_param(self.path, 'foo', self.tags, ssm)
 
         self.assertTrue(response['ResponseMetadata']['HTTPStatusCode'], '200')
+
 
 if __name__ == "__main__":
     unittest.main()
