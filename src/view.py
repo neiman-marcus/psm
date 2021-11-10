@@ -4,12 +4,14 @@ import logging
 import json
 from flatten_json import unflatten
 import os
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def handler(event, context):
-    
+
     logger.info('Incoming event!')
     logger.info(f'Event:\n{event}')
 
@@ -42,6 +44,7 @@ def handler(event, context):
 
         return response
 
+
 def parse_event(event):
 
     app_id = event['queryStringParameters']['appId']
@@ -54,19 +57,24 @@ def parse_event(event):
         path = event['headers']['x-path-override']
     else:
         path = f'/{app_id}/{stage}/'
-    logger.info(f'Path Override: {path}')
+
+    logger.info(f'Path : {path}')
 
     return path
+
 
 def get_params(path):
 
     ssm = get_client('ssm')
-    
-    response = ssm.get_parameters_by_path(
-        Path=f'{path}',
-        Recursive=True,
-        WithDecryption=True,
-    )
+
+    try:
+        response = ssm.get_parameters_by_path(
+            Path=f'{path}',
+            Recursive=True,
+            WithDecryption=True,
+        )
+    except ClientError as e:
+        logger.info(f'Unexpected ClientError: {e}')
 
     logger.info('Got params!')
 
@@ -74,11 +82,13 @@ def get_params(path):
 
     return naked_params
 
+
 def get_client(service):
     region = os.environ['REGION']
     client = boto3.client(service, region_name=region)
 
     return client
+
 
 def parse_params(path, naked_params):
 
@@ -100,9 +110,9 @@ def parse_params(path, naked_params):
 
         new_param = {key: value}
         flat_params = {**flat_params, **new_param}
-    
+
     logger.info('Flat params parsed!')
-    
+
     unflat_params = unflatten(flat_params, '.')
     logger.info(f'Params: {unflat_params}')
 
@@ -110,13 +120,19 @@ def parse_params(path, naked_params):
 
     return params
 
+
 def encrypt(secret):
 
     key = os.environ['KMS_KEY_ALIAS']
     logger.info(f'KMS Key: {key}')
 
     kms = get_client('kms')
-    kms_response = kms.encrypt(KeyId=key, Plaintext=secret.encode())
+
+    try:
+        kms_response = kms.encrypt(KeyId=key, Plaintext=secret.encode())
+    except ClientError as e:
+        logger.error(f'Unexpected ClientError: {e}')
+
     logger.info(f'KMS Response:\n{kms_response}')
 
     blob = base64.b64encode(kms_response['CiphertextBlob'])

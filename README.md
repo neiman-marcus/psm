@@ -10,9 +10,9 @@ Related blog post can be found on the [Neiman Marcus Medium page](https://medium
 
 ## Details
 
-Cloud applications often require runtime and deployment configuration which must be managed. Following infrastructure-as-code best practices, storing this configuration alongside the application is crucial. 
+Cloud applications often require runtime and deployment configuration which must be managed. Following infrastructure-as-code best practices, storing this configuration alongside the application is crucial.
 
-Psm, short for *parameter store manager*, aims to allow product teams, developers, and cloud architects to easily maintain and deploy configuration in a secure, reliable, and templated manner, inside source control.
+Psm, short for _parameter store manager_, aims to allow product teams, developers, and cloud architects to easily maintain and deploy configuration in a secure, reliable, and templated manner, inside source control.
 
 Deployed with serverless framework, this application can be easily modified for any AWS environment. If you have an improvement or run into an issue please participate on the github page.
 
@@ -24,13 +24,46 @@ Psm assumes that application configuration is stored in a specific heirarchy in 
 
 You can override the default path, by passing a hardcoded string in the `x-path-override` header.
 
+### Block value parser
+
+You can override the default parser by passing a `x-kv-block-parser: true` in the header. This will use parent nodes of the json as keys (see example below).
+
+#### eg. input json:
+
+```JSON
+{
+  "keyOne": {
+    "DOB": "02/19/1983",
+    "Phone": "+1 (214) 999999"
+  },
+  "keyTwo": {
+    "VehicleID": "1XBYUT"
+  },
+  "keyThree": {
+    "API_ENDPOINT": {
+      "uri": "/dbcy.com/US",
+      "toggles": ["ORDER_SORT_OPTION_1", "ORDER_SORT_OPTION_2"]
+    }
+  }
+}
+
+```
+
+#### output ssm key value:
+
+| key        | value                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------- |
+| `keyOne`   | `{"DOB": "02/19/1983","Phone": "+1 (214) 999999"`                                                    |
+| `keyTwo`   | `{"VehicleID": "1XBYUT"}`                                                                            |
+| `keyThree` | `{"API_ENDPOINT": {"uri": "/dbcy.com/US","toggles": ["ORDER_SORT_OPTION_1","ORDER_SORT_OPTION_2"]}}` |
+
 ## Psm functions
 
 Psm uses the following three lambda functions:
 
-* Encrypt - Encrypt secrets via KMS CMK to securely store in source control.
-* Update - Update configuration in AWS SSM Parameter Store
-* View - Retrieve and view configuration in AWS SSM Parameter Store
+- Encrypt - Encrypt secrets via KMS CMK to securely store in source control.
+- Update - Update configuration in AWS SSM Parameter Store
+- View - Retrieve and view configuration in AWS SSM Parameter Store
 
 ### Encrypt
 
@@ -135,9 +168,9 @@ x-api-key: abcdef0123456789ABCDEF0123456789abcdef01
 
 ## Installation && Deployment
 
-* Install the necessary sls plugins with `npm install`.
-* Install the necessary python requirements `pip install -r requirements.txt`.
-* Deploy with `serverless deploy --stage prod`
+- Install the necessary sls plugins with `npm install`.
+- Install the necessary python requirements `pip install -r requirements.txt`.
+- Deploy with `serverless deploy --stage prod`
 
 ## Usage
 
@@ -153,7 +186,7 @@ Serverless Framework is one of the tools that can leverage these parameters from
 
 #### Example
 
-* With the above example
+- With the above example
 
 ```YAML
 provider:
@@ -164,46 +197,47 @@ provider:
 
 ### Query String Parameters
 
-| parameter | Description | Required |
-| --- | --- | --- |
-| appId | The name of the application or service to prefix parameters with. | yes |
-| stage | The name of the stage to prefix parameters with. | yes |
+| parameter | Description                                                       | Required |
+| --------- | ----------------------------------------------------------------- | -------- |
+| appId     | The name of the application or service to prefix parameters with. | yes      |
+| stage     | The name of the stage to prefix parameters with.                  | yes      |
 
 ### Custom Headers
 
-| header | Description | Required |
-| --- | --- | --- |
-| x-path-override | The custom path to override the PSM default. | no |
+| header            | Description                                  | Required |
+| ----------------- | -------------------------------------------- | -------- |
+| x-path-override   | The custom path to override the PSM default. | no       |
+| x-kv-block-parser | An alternate way to parse input json.        | no       |
 
 ## Security
 
-* The encrypt function does not require an API key since it is fairly simple and non-impacting.
-* The update and view functions require API keys.
-* The API key should be stored securely within your build server's credential store and not shared.
-* It is suggested that you modify the ApiGatewayRestApi to white list specific IP addresses if possible. Alternatively you can run the Api Gateway as a private endpoint.
-* Update the `KMSKey.yml` resource file with the appropriate IAM roles to manange the CMK.
+- The encrypt function does not require an API key since it is fairly simple and non-impacting.
+- The update and view functions require API keys.
+- The API key should be stored securely within your build server's credential store and not shared.
+- It is suggested that you modify the ApiGatewayRestApi to white list specific IP addresses if possible. Alternatively you can run the Api Gateway as a private endpoint.
+- Update the `KMSKey.yml` resource file with the appropriate IAM roles to manange the CMK.
 
 ## Known issues
 
-* Suppliying a list will map each item in the list to it's index.
-  * For example, itme `{"foo": ["bar", "baz"]}` will be flattened to `/{application}/{stage}/foo.0` and `/{application}/{stage}/foo.1` with the value of `bar` and `baz` respectedly.
-  * The `view` function will return the parameters as `{"foo": {"0": bar", "1": baz"}}`
-  * It is best to avoid lists in the mean time.
-* StringLists are not currently supported.
+- Suppliying a list will map each item in the list to it's index.
+  - For example, itme `{"foo": ["bar", "baz"]}` will be flattened to `/{application}/{stage}/foo.0` and `/{application}/{stage}/foo.1` with the value of `bar` and `baz` respectedly.
+  - The `view` function will return the parameters as `{"foo": {"0": bar", "1": baz"}}`
+  - It is best to avoid lists in the mean time.
+- StringLists are not currently supported.
 
 ## Items to Add
 
-* Optional parameter clean up
-* SSM Parameter Store backup and logging of changes
-* Better error handling
-* String Lists
+- Optional parameter clean up
+- SSM Parameter Store backup and logging of changes
+- Better error handling
+- String Lists
 
 ## Authors
 
-* [**Clay Danford**](mailto:clay_danford@neimanmarcus.com) - Project creation and development.
+- [**Clay Danford**](mailto:clay_danford@neimanmarcus.com) - Project creation and development.
 
 ## Conduct / Contributing / License
 
-* Refer to our contribution guidelines to contribute to this project. See [CONTRIBUTING.md](https://github.com/neiman-marcus/psm/tree/master/CONTRIBUTING.md).
-* All contributions must follow our code of conduct. See [CONDUCT.md](https://github.com/neiman-marcus/psm/tree/master/CONDUCT.md).
-* This project is licensed under the Apache 2.0 license. See [LICENSE](https://github.com/neiman-marcus/psm/tree/master/LICENSE).
+- Refer to our contribution guidelines to contribute to this project. See [CONTRIBUTING.md](https://github.com/neiman-marcus/psm/tree/master/CONTRIBUTING.md).
+- All contributions must follow our code of conduct. See [CONDUCT.md](https://github.com/neiman-marcus/psm/tree/master/CONDUCT.md).
+- This project is licensed under the Apache 2.0 license. See [LICENSE](https://github.com/neiman-marcus/psm/tree/master/LICENSE).
