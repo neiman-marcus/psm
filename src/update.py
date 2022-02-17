@@ -193,8 +193,8 @@ def decrypt(value):
         kms_response = kms.decrypt(CiphertextBlob=bytes_value)
     except ClientError as e:
         logger.error(f'Unexpected ClientError: {e}')
-
-    logger.info('** Secret decrypted!')
+    else:
+        logger.info('** Secret decrypted!')
 
     bytes_decrypted_value = kms_response['Plaintext']
     value = bytes_decrypted_value.decode('utf-8')
