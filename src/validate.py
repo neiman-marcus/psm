@@ -57,15 +57,22 @@ def handler(event, context):
         return response
 
     except:
-
-        response = {
-            'statusCode': 500,
-            'body': 'Err: Internal server error.',
-            'headers': {
-                'Content-Type': 'text/plain'
+        if 'key' in locals():
+            response = {
+                'statusCode': 500,
+                'body': 'Err: Internal server error while work with: ' + key,
+                'headers': {
+                    'Content-Type': 'text/plain'
+                }
             }
-        }
-
+        else:
+            response = {
+                'statusCode': 500,
+                'body': 'Err: Internal server error.',
+                'headers': {
+                    'Content-Type': 'text/plain'
+                }
+            }
         return response
 
 
@@ -187,17 +194,17 @@ def decrypt(value):
     trim_value = value[7:]
     bytes_value = base64.b64decode(trim_value)
 
-    kms = get_client('kms')
-
     try:
+        kms = get_client('kms')
         kms_response = kms.decrypt(CiphertextBlob=bytes_value)
     except ClientError as e:
-        logger.error(f'Unexpected ClientError: {e}')
+        logger.critical('Error while decoding by KMS: %s', e)
+        value = e
+        raise
     else:
         logger.info('** Secret decrypted!')
-
-    bytes_decrypted_value = kms_response['Plaintext']
-    value = bytes_decrypted_value.decode('utf-8')
+        bytes_decrypted_value = kms_response['Plaintext']
+        value = bytes_decrypted_value.decode('utf-8')
 
     return value
 
