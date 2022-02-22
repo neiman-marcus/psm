@@ -146,9 +146,12 @@ def get_path(event):
 
 
 def put_param(path, key, value):
+    """
+    Update SSM parameter, only if it differ from the current one.
+    """
 
     logger.info(f'** Key: {key}, Value: {value}')
-    ssm = get_client('ssm')
+    # ssm = get_client('ssm')
 
     if isinstance(value, str) and value.startswith('cipher:') is True:
         value = decrypt(value)
@@ -160,17 +163,18 @@ def put_param(path, key, value):
     isKvDifferent = compare_param(path, key, value, param_type)
 
     if isKvDifferent is True:
-        try:
-            put = ssm.put_parameter(
-                Name=f'{path}{key}',
-                Value=f'{value}',
-                Type=param_type,
-                Overwrite=True
-            )
-        except ClientError as e:
-            logger.error(f'Unexpected ClientError: {e}')
+        logger.info('** Parameter is different.')
+        # try:
+        #     put = ssm.put_parameter(
+        #         Name=f'{path}{key}',
+        #         Value=f'{value}',
+        #         Type=param_type,
+        #         Overwrite=True
+        #     )
+        # except ClientError as e:
+        #     logger.error(f'Unexpected ClientError: {e}')
 
-        logger.info(f'Put Response:\n{put}')
+        # logger.info(f'Put Response:\n{put}')
         response = True
     else:
         logger.info('** Parameter is current.')
