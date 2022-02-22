@@ -7,10 +7,6 @@ from botocore.exceptions import ClientError
 from flatten_json import flatten
 
 
-# logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] [function: %(funcName)s] %(message)s',
-#                     datefmt='%Y-%m-%d:%H:%M:%S',
-#                     level=logging.DEBUG)
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -37,14 +33,14 @@ def handler(event, context):
             keyValueDict = parse_event(data)
 
         logger.info('** Finding tags **')
-        tags = get_tags(data)
+        # tags = get_tags(data)
 
         logger.info("** Updating SSM Parameters **")
         for key, value in keyValueDict.items():
             put_param(path, key, value)
 
-            if len(tags) != 0:
-                tag_param(path, key, tags)
+            # if len(tags) != 0:
+            #     tag_param(path, key, tags)
 
         response = {
             'statusCode': 200,
@@ -110,22 +106,6 @@ def parse_event(data):
     logger.info(f'Updated Data:\n{flat_data}')
 
     return flat_data
-
-
-def get_tags(data):
-    logger.info(f'** Looking for tags **')
-    tags = {}
-
-    flat_data = flatten(data, '.')
-
-    for key, value in flat_data.items():
-        if key.startswith('metadata.tags.'):
-            key = key[14:]
-            new_tag = {key: value}
-            tags = {**tags, **new_tag}
-
-    logger.info(f'** Tags found: {tags} **')
-    return tags
 
 
 def get_path(event):
@@ -241,32 +221,3 @@ def compare_param(path, key, value, param_type):
         isDifferent = True
 
     return isDifferent
-
-
-def tag_param(path, key, tags):
-
-    logger.info('** Adding Tags')
-    ssm = get_client('ssm')
-
-    psm_param = {'ManagedBy': 'psm'}
-    tags = {**tags, **psm_param}
-
-    for tag_key, tag_value in tags.items():
-
-        try:
-            tag = ssm.add_tags_to_resource(
-                ResourceType='Parameter',
-                ResourceId=f'{path}{key}',
-                Tags=[
-                    {
-                        'Key': tag_key,
-                        'Value': tag_value
-                    },
-                ]
-            )
-        except ClientError as e:
-            logger.error(f'Unexpected ClientError: {e}')
-
-        logger.info(f'Tag Response:\n{tag}')
-
-    return tag
