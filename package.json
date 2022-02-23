@@ -9,9 +9,9 @@
   "author": "Clay Danford",
   "license": "Apache-2.0",
   "dependencies": {
-    "serverless": "2.72.2",
-    "serverless-iam-roles-per-function": "",
-    "serverless-pseudo-parameters": "",
-    "serverless-python-requirements": ""
+    "serverless": "<3",
+    "serverless-iam-roles-per-function": "3.x.x",
+    "serverless-pseudo-parameters": "^2.5.0",
+    "serverless-python-requirements": "^5.0.1"
   }
 }
