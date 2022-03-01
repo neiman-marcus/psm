@@ -19,64 +19,49 @@ def parse_args():
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
     for arg, value in sorted(vars(args).items()):
-        logging.debug('Argument {}: {}'.format(arg, value))
+        logging.debug('Argument %s: %s', arg, value)
     return args
 
 
 def parse_event(data):
 
     logger.info('** Parsing json using default parser **')
-    logger.info(f'Data:\n{data}')
+    logger.debug(f'Data:\n{data}')
 
     flat_data = flatten(data, '.')
-    logger.info(f'Flat data:\n{flat_data}')
+    logger.debug(f'Flat data:\n{flat_data}')
 
     for key, value in flat_data.items():
         if isinstance(value, int):
             flat_data[key] = str(value)
 
-    logger.info(f'Updated Data:\n{flat_data}')
+    logger.debug(f'Updated Data:\n{flat_data}')
 
     return flat_data
 
 
 def check_cipher(key, value):
-    """
-    Update SSM parameter, only if it differ from the current one.
-    """
-
-    logger.info(f'** Key: {key}, Value: {value}')
+    logger.info('Key: %s', key)
     if isinstance(value, str) and value.startswith('cipher:') is True:
-        value = decrypt(value)
+        trim_value = value[7:]
+        bytes_value = base64.b64decode(trim_value)
+
+        try:
+            kms = get_client('kms')
+            _ = kms.decrypt(CiphertextBlob=bytes_value)
+        except ClientError as e:
+            logger.info('Key: %s, cipher BAD', key)
+            logger.critical('Error while decoding by KMS: %s', e)
+        else:
+            logger.info('Key: %s, cipher GOOD', key)
 
 
 def get_client(service):
-    region = os.environ['REGION']
-    service = boto3.client(service, region_name=region)
+    # REGION should be set by variables AWS_DEFAULT_REGION and AWS_REGION.
+    # region = os.environ['REGION']
+    # service = boto3.client(service, region_name=region)
+    service = boto3.client(service)
     return service
-
-
-def decrypt(value):
-
-    key = os.environ['KMS_KEY_ALIAS']
-    logger.info(f'** KMS Key: {key}')
-
-    trim_value = value[7:]
-    bytes_value = base64.b64decode(trim_value)
-
-    try:
-        kms = get_client('kms')
-        kms_response = kms.decrypt(CiphertextBlob=bytes_value)
-    except ClientError as e:
-        logger.critical('Error while decoding by KMS: %s', e)
-        value = e
-        raise
-    else:
-        logger.info('** Secret decrypted!')
-        bytes_decrypted_value = kms_response['Plaintext']
-        value = bytes_decrypted_value.decode('utf-8')
-
-    return value
 
 
 def validate_all_configs():
