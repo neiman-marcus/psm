@@ -6,4 +6,4 @@ shopt -s dotglob
 
 export KMS_KEY_ALIAS='alias/psm'
 export AWS_DEFAULT_REGION='us-east-1'
-python3 ./validate_all_configs.py ./*json
+python3 ./validate_all_configs.py --loglevel WARNING ./*json

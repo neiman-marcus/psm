@@ -25,7 +25,6 @@ def parse_args():
 
 def parse_event(data):
 
-    logger.info('** Parsing json using default parser **')
     logger.debug(f'Data:\n{data}')
 
     flat_data = flatten(data, '.')
@@ -41,8 +40,8 @@ def parse_event(data):
 
 
 def check_cipher(key, value):
-    logger.info('Key: %s', key)
     if isinstance(value, str) and value.startswith('cipher:') is True:
+        logger.warning('Key: %s', key)
         trim_value = value[7:]
         bytes_value = base64.b64decode(trim_value)
 
@@ -50,10 +49,12 @@ def check_cipher(key, value):
             kms = get_client('kms')
             _ = kms.decrypt(CiphertextBlob=bytes_value)
         except ClientError as e:
-            logger.info('Key: %s, cipher BAD', key)
+            logger.warning('Key: %s, cipher BAD', key)
             logger.critical('Error while decoding by KMS: %s', e)
         else:
-            logger.info('Key: %s, cipher GOOD', key)
+            logger.warning('Key: %s, cipher GOOD', key)
+    else:
+        logger.info('Key: %s', key)
 
 
 def get_client(service):
