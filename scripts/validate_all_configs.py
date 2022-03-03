@@ -58,24 +58,17 @@ def check_cipher(key, value, client_kms):
         logger.info('Key: %s', key)
 
 
-def validate_configs_for_one_aws_account(client_kms):
-    for filename in args.config_files:
-        print(20 * '#')
-        print(filename)
-        if os.path.exists(filename):
-            with open(filename, 'r') as f:
-                file_data = f.read()
-                json_data = json.loads(file_data)
-                # print(json_data)
-                keyValueDict = parse_event(json_data)
-                for key, value in keyValueDict.items():
-                    check_cipher(key, value, client_kms)
-        else:
-            print("File doesn't exist:", filename)
-    print(20 * '#')
+def parse_json_and_check(filename, client_kms):
+    with open(filename, 'r') as f:
+        file_data = f.read()
+        json_data = json.loads(file_data)
+        keyValueDict = parse_event(json_data)
+        for key, value in keyValueDict.items():
+            check_cipher(key, value, client_kms)
 
 
 def validate_all_configs():
+    configs_validated = []
     with open(args.main_config) as f:
         accounts = json.load(f)
     for current_env in accounts['environments']:
@@ -90,10 +83,14 @@ def validate_all_configs():
             sts_identity = client_sts.get_caller_identity()
             print('Arn:', sts_identity['Arn'])
             client_kms = aws_session.client('kms', region_name=current_region)
-            validate_configs_for_one_aws_account(client_kms)
+            for filename in current_env['psm_config_names']:
+                if os.path.exists(filename):
+                    configs_validated.append(filename)
+                    parse_json_and_check(filename, client_kms)
         else:
             print('Account disabled in', args.main_config)
         print()
+    print('All files:', configs_validated)
 
 
 if __name__ == '__main__':

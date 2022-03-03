@@ -4,19 +4,23 @@
       "name": "dev",
       "awscli-profile": "company-dev",
       "region": "eu-central-1",
-      "enabled": true
+      "enabled": true,
+      "psm_config_names": ["dev.json"]
+
     },
     {
       "name": "preprod",
       "awscli-profile": "company-preprod",
       "region": "us-east-2",
       "enabled": true
+      "psm_config_names": ["preprod.json"]
     },
     {
       "name": "prod",
       "awscli-profile": "company-prod",
       "region": "us-east-2",
       "enabled": false
+      "psm_config_names": ["prod.json"]
     }
   ]
 }
