@@ -5,6 +5,7 @@ import os
 import argparse
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
 from flatten_json import flatten
 
 
@@ -15,26 +16,27 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--fail_if_not_exist', default=False, action="store_true", help="Fail if config file doesn't exist")
     parser.add_argument('--loglevel', default="INFO", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
+    parser.add_argument('--main_config', default="accounts.json", type=str)
     parser.add_argument(dest='config_files', metavar='', type=str, nargs="+", help='List of files to check')
-    args = parser.parse_args()
-    logger.setLevel(args.loglevel)
-    for arg, value in sorted(vars(args).items()):
+    args_local = parser.parse_args()
+    logger.setLevel(args_local.loglevel)
+    for arg, value in sorted(vars(args_local).items()):
         logging.debug('Argument %s: %s', arg, value)
-    return args
+    return args_local
 
 
 def parse_event(data):
 
-    logger.debug(f'Data:\n{data}')
+    logger.debug('Data:\n%s', data)
 
     flat_data = flatten(data, '.')
-    logger.debug(f'Flat data:\n{flat_data}')
+    logger.debug('Flat data:\n%s', flat_data)
 
     for key, value in flat_data.items():
         if isinstance(value, int):
             flat_data[key] = str(value)
 
-    logger.debug(f'Updated Data:\n{flat_data}')
+    logger.debug('Updated Data:\n%s', flat_data)
 
     return flat_data
 
@@ -65,8 +67,7 @@ def get_client(service):
     return service
 
 
-def validate_all_configs():
-    args = parse_args()
+def validate_configs_for_one_aws_account():
     for filename in args.config_files:
         print(20 * '#')
         print(filename)
@@ -83,5 +84,20 @@ def validate_all_configs():
     print(20 * '#')
 
 
+def validate_all_configs():
+    with open(args.main_config) as f:
+        accounts = json.load(f)
+    for current_env in accounts['environments']:
+        print(current_env['name'])
+        current_profile = current_env['awscli-profile']
+        current_region = current_env['region']
+        aws_config = Config(source_profile=current_profile, region_name=current_region)
+        client_sts = boto3.client("sts", config=aws_config)
+        account_id = client_sts.get_caller_identity()["Account"]
+        print(account_id)
+    # validate_configs_for_one_aws_account()
+
+
 if __name__ == '__main__':
+    args = parse_args()
     validate_all_configs()

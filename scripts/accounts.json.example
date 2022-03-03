@@ -1,0 +1,19 @@
+{
+  "environments": [
+    {
+      "name": "dev",
+      "awscli-profile": "company-dev",
+      "region": "eu-central-1"
+    },
+    {
+      "name": "preprod",
+      "awscli-profile": "company-preprod",
+      "region": "us-east-2"
+    },
+    {
+      "name": "prod",
+      "awscli-profile": "company-prod",
+      "region": "us-east-2"
+    }
+  ]
+}
