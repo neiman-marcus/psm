@@ -40,15 +40,15 @@ def parse_event(data):
     return flat_data
 
 
-def check_cipher(key, value):
+def check_cipher(key, value, client_kms):
     if isinstance(value, str) and value.startswith('cipher:') is True:
         logger.warning('Key: %s', key)
         trim_value = value[7:]
         bytes_value = base64.b64decode(trim_value)
 
         try:
-            kms = get_client('kms')
-            _ = kms.decrypt(CiphertextBlob=bytes_value)
+            # kms = get_client('kms')
+            _ = client_kms.decrypt(CiphertextBlob=bytes_value)
         except ClientError as e:
             logger.warning('Key: %s, cipher BAD', key)
             logger.critical('Error while decoding by KMS: %s', e)
@@ -58,15 +58,7 @@ def check_cipher(key, value):
         logger.info('Key: %s', key)
 
 
-def get_client(service):
-    # REGION should be set by variables AWS_DEFAULT_REGION and AWS_REGION.
-    # region = os.environ['REGION']
-    # service = boto3.client(service, region_name=region)
-    service = boto3.client(service)
-    return service
-
-
-def validate_configs_for_one_aws_account():
+def validate_configs_for_one_aws_account(client_kms):
     for filename in args.config_files:
         print(20 * '#')
         print(filename)
@@ -77,7 +69,7 @@ def validate_configs_for_one_aws_account():
                 # print(json_data)
                 keyValueDict = parse_event(json_data)
                 for key, value in keyValueDict.items():
-                    check_cipher(key, value)
+                    check_cipher(key, value, client_kms)
         else:
             print("File doesn't exist:", filename)
     print(20 * '#')
@@ -91,13 +83,17 @@ def validate_all_configs():
         if current_env['enabled']:
             current_profile = current_env['awscli-profile']
             current_region = current_env['region']
-            session = boto3.session.Session(profile_name=current_profile)
-            client_sts = session.client('sts', region_name=current_region)
-            account_id = client_sts.get_caller_identity()["Account"]
-            print('Account ID:', account_id)
+            # Couldn't find how to set profile name with "boto3.client", so use boto3.Session → session.client
+            aws_session = boto3.session.Session(profile_name=current_profile)
+            # Run "aws sts get-caller-identity" to check access
+            client_sts = aws_session.client('sts', region_name=current_region)
+            sts_identity = client_sts.get_caller_identity()
+            print('Arn:', sts_identity['Arn'])
+            client_kms = aws_session.client('kms', region_name=current_region)
+            validate_configs_for_one_aws_account(client_kms)
         else:
             print('Account disabled in', args.main_config)
-    # validate_configs_for_one_aws_account()
+        print()
 
 
 if __name__ == '__main__':
