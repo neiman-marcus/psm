@@ -5,7 +5,6 @@ import os
 import argparse
 import boto3
 from botocore.exceptions import ClientError
-from botocore.config import Config
 from flatten_json import flatten
 
 
@@ -88,13 +87,16 @@ def validate_all_configs():
     with open(args.main_config) as f:
         accounts = json.load(f)
     for current_env in accounts['environments']:
-        print(current_env['name'])
-        current_profile = current_env['awscli-profile']
-        current_region = current_env['region']
-        aws_config = Config(source_profile=current_profile, region_name=current_region)
-        client_sts = boto3.client("sts", config=aws_config)
-        account_id = client_sts.get_caller_identity()["Account"]
-        print(account_id)
+        print('Name:', current_env['name'])
+        if current_env['enabled']:
+            current_profile = current_env['awscli-profile']
+            current_region = current_env['region']
+            session = boto3.session.Session(profile_name=current_profile)
+            client_sts = session.client('sts', region_name=current_region)
+            account_id = client_sts.get_caller_identity()["Account"]
+            print('Account ID:', account_id)
+        else:
+            print('Account disabled in', args.main_config)
     # validate_configs_for_one_aws_account()
 
 

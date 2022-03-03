@@ -3,17 +3,20 @@
     {
       "name": "dev",
       "awscli-profile": "company-dev",
-      "region": "eu-central-1"
+      "region": "eu-central-1",
+      "enabled": true
     },
     {
       "name": "preprod",
       "awscli-profile": "company-preprod",
-      "region": "us-east-2"
+      "region": "us-east-2",
+      "enabled": true
     },
     {
       "name": "prod",
       "awscli-profile": "company-prod",
-      "region": "us-east-2"
+      "region": "us-east-2",
+      "enabled": false
     }
   ]
 }
