@@ -16,7 +16,6 @@ def parse_args():
     parser.add_argument('--fail_if_not_exist', default=False, action="store_true", help="Fail if config file doesn't exist")
     parser.add_argument('--loglevel', default="INFO", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
     parser.add_argument('--main_config', default="accounts.json", type=str)
-    parser.add_argument(dest='config_files', metavar='', type=str, nargs="+", help='List of files to check')
     args_local = parser.parse_args()
     logger.setLevel(args_local.loglevel)
     for arg, value in sorted(vars(args_local).items()):
