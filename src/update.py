@@ -1,10 +1,10 @@
 import base64
-import boto3
-from botocore.exceptions import ClientError
 import logging
 import json
-from flatten_json import flatten
 import os
+import boto3
+from botocore.exceptions import ClientError
+from flatten_json import flatten
 
 
 # logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] [function: %(funcName)s] %(message)s',
