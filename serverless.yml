@@ -90,6 +90,35 @@ functions:
               headers:
                 x-path-override: false
 
+  validate:
+    handler: src/validate.handler
+
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - kms:Decrypt
+        Resource:
+          - arn:aws:kms:${self:custom.region}:#{AWS::AccountId}:${self:custom.kmsAlias}
+      - Effect: Allow
+        Action:
+          - ssm:DescribeParameters
+          - ssm:GetParameter*
+        Resource:
+          - arn:aws:ssm:${self:custom.region}:#{AWS::AccountId}:parameter/*
+
+    events:
+      - http:
+          method: post
+          path: validate
+          private: true
+          request:
+            parameters:
+              querystrings:
+                appId: true
+                stage: true
+              headers:
+                x-path-override: false
+
   view:
     handler: src/view.handler
 
